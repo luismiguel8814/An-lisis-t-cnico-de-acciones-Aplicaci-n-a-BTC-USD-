@@ -1,0 +1,205 @@
+---
+title: "Análisis técnico de acciones Aplicación a BTC-USD"
+author: "luis miguel arrieta contreras / carmen elena mercado vergara"
+date: "2025-05-07"
+output: html_document
+
+---
+```{r}
+## Paquetería
+install.packages("quantmod")
+install.packages("TTR")
+
+library(TTR)
+library(quantmod)
+
+## Cargando data de activos financieros desde Yahoo
+start_date <- "2023-01-01"
+end_date <- Sys.Date()  # Fecha actual
+
+crypto <- "BTC-USD"
+getSymbols(crypto, src = "yahoo", from = start_date, to = end_date)
+
+cryptos <- c("BTC-USD", "ETH-USD", "ADA-USD")
+getSymbols(cryptos, src = "yahoo", from = start_date, to = end_date)
+
+stock <- c("FB")
+getSymbols(stock, src = "yahoo", from = start_date, to = end_date)
+
+stock_list <- c("FB", "AAPL", "GOOG")
+getSymbols(stock_list, src = "yahoo", from = start_date, to = end_date)
+
+head(`BTC-USD`, n = 3)
+
+class(`BTC-USD`)
+
+## Gráfico de líneas: Muestra el precio y volumen transado
+chartSeries(FB, type = "line", subset = paste0(start_date, "::", end_date), theme = chartTheme('white'))
+chartSeries(`BTC-USD`, type = "line", subset = paste0(start_date, "::", end_date), theme = chartTheme('white'))
+
+## Gráfico de barras: Muestra precio de cierre, de apertura, máximo, mínimo y volumen.
+chartSeries(`BTC-USD`,
+            type = "bar",
+            subset = paste0(start_date, "::", end_date),
+            theme = chartTheme('white'))
+
+## Gráfico de velas: igual que el gráfico anterior
+chartSeries(`BTC-USD`,
+            type = "candlesticks",
+            subset = paste0(start_date, "::", end_date),
+            up.col = 'green',
+            down.col = 'black',
+            theme = chartTheme('white'))
+
+chartSeries(`BTC-USD`,
+            subset = paste0(start_date, "::", end_date),
+            theme = chartTheme('white'))
+
+chartSeries(`BTC-USD`,
+            subset = paste("last 10 months"),
+            theme = chartTheme('white'))
+
+## Medias móviles
+addSMA(n = 20, on = 1, col = "green")
+addSMA(n = 50, on = 1, col = "blue")
+addSMA(n = 200, on = 1, col = "red")
+addEMA(n = 30, on = 1, col = "orange")
+
+## Bandas de Bollinger
+chartSeries(`BTC-USD`,
+            subset = paste0(start_date, "::", end_date),
+            theme = chartTheme('white'))
+addBBands(n = 20, sd = 2)
+
+## Momentum
+chartSeries(`BTC-USD`,
+            subset = paste0(start_date, "::", end_date),
+            theme = chartTheme('white'))
+addMomentum(n = 10)
+
+## Tasa de Cambio
+chartSeries(`BTC-USD`,
+            subset = paste0(start_date, "::", end_date),
+            theme = chartTheme('white'))
+addROC(n = 10)
+addMomentum(n = 10)
+
+## Divergencia de convergencia de la media móvil (MACD)
+chartSeries(`BTC-USD`,
+            subset = paste0(start_date, "::", end_date),
+            theme = chartTheme('white'))
+addMACD(fast = 12, slow = 26, signal = 9, type = "EMA")
+addSMA(n = 12, on = 1, col = "red")
+addSMA(n = 26, on = 1, col = "blue")
+
+## Índice de fuerza relativa (RSI)
+chartSeries(`BTC-USD`,
+            subset = paste0(start_date, "::", end_date),
+            theme = chartTheme('white'))
+addRSI(n = 14, maType = "EMA")
+
+## Gráfico con indicadores acumulados
+chartSeries(`BTC-USD`, type = "candlesticks",
+            theme = "white",
+            TA = 'addBBands();addBBands(draw="p");addVo();addMACD();addRSI();addSMA()',
+            subset = paste0(start_date, "::", end_date))
+
+chartSeries(`BTC-USD`, type = "candlesticks",
+            theme = "white",
+            TA = 'addMACD();addRSI();addSMA(n=50,col = "red");addSMA(n=200,col = "blue");addSMA(n=20,col = "green");addCCI()',
+            subset = paste0(start_date, "::", end_date))
+
+## Función para creación de graficos de múltiples acciones
+gen_plots <- function(x) {
+  chartSeries(get(x),
+              name = x,
+              TA = 'addVo();addOBV();addRSI()',
+              subset = paste0(start_date, "::", end_date),
+              theme = "white")
+}
+
+stock_list <- c("FB", "AAPL", "GOOG")
+crypto_list <- c("BTC-USD", "ETH-USD", "ADA-USD")
+
+for (i in stock_list) {
+  gen_plots(i)
+}
+
+for (i in crypto_list) {
+  gen_plots(i)
+}
+
+#hasta aquiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii
+
+## Paquetería necesaria
+install.packages("quantmod")  # Para descargar datos
+install.packages("TTR")      # Para gráficos financieros
+install.packages("forecast")  # Para modelado ARIMA
+install.packages("rugarch")   # Para modelado GARCH
+install.packages("tseries")   # Para pruebas de estacionariedad
+
+library(quantmod)
+library(TTR)
+library(forecast)
+library(rugarch)
+library(tseries)
+
+## Cargar datos de BTC-USD desde Yahoo Finance
+start_date <- "2023-01-01"
+end_date <- Sys.Date()  # Fecha actual
+crypto <- "BTC-USD"
+getSymbols(crypto, src = "yahoo", from = start_date, to = end_date)
+
+## Extraer precios de cierre ajustados
+btc_close <- Cl(`BTC-USD`)  # Precios de cierre
+btc_log <- log(btc_close)   # Precios en logaritmo para estabilidad
+btc_returns <- diff(btc_log)[-1]  # Retornos logarítmicos (diferencia primera, eliminar NA)
+
+## Visualizar los retornos
+plot(btc_returns, main = "Retornos Logarítmicos de BTC-USD", ylab = "Retornos", xlab = "Fecha")
+
+## 1. Análisis ARIMA
+# Prueba de estacionariedad con ADF
+adf_test <- adf.test(btc_returns, alternative = "stationary")
+print(adf_test)  # Si p-valor < 0.05, la serie es estacionaria
+
+# Ajustar modelo ARIMA (auto.arima selecciona el mejor modelo según AIC)
+arima_model <- auto.arima(btc_returns, 
+                          seasonal = FALSE, 
+                          stationary = TRUE, 
+                          ic = "aic", 
+                          trace = TRUE)
+summary(arima_model)
+
+# Verificar residuos
+checkresiduals(arima_model)  # Prueba Ljung-Box para autocorrelación en residuos
+
+# Pronóstico con ARIMA
+arima_forecast <- forecast(arima_model, h = 10)  # Pronóstico a 10 días
+plot(arima_forecast, main = "Pronóstico ARIMA para Retornos de BTC-USD")
+
+## 2. Análisis GARCH
+# Especificar modelo GARCH(1,1) con media ARIMA
+garch_spec <- ugarchspec(
+  variance.model = list(model = "sGARCH", garchOrder = c(1, 1)),  # GARCH(1,1) estándar
+  mean.model = list(armaOrder = c(arima_model$arma[1], arima_model$arma[2]), include.mean = TRUE),  # Usar órdenes ARIMA
+  distribution.model = "std"  # Distribución t-Student para colas pesadas
+)
+
+# Ajustar modelo GARCH
+garch_fit <- ugarchfit(spec = garch_spec, data = btc_returns, solver = "hybrid")
+print(garch_fit)
+
+# Graficar volatilidad condicional
+plot(garch_fit, which = 3)  # Gráfico de volatilidad condicional
+
+# Pronosticar volatilidad con GARCH
+garch_forecast <- ugarchforecast(garch_fit, n.ahead = 10)  # Pronóstico a 10 días
+plot(garch_forecast, which = 3)  # Volatilidad pronosticada
+
+# Verificación de diagnóstico
+garch_residuals <- residuals(garch_fit, standardize = TRUE)
+acf(garch_residuals, main = "ACF de Residuos Estandarizados")  # Verificar autocorrelación restante
+
+```
+
